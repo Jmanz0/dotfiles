@@ -10,4 +10,5 @@ export PATH="/usr/local/mysql-8.0.32-macos13-arm64/bin:$PATH"
 export PATH="/usr/local/bin:$PATH"
 export PATH="/opt/homebrew/opt/mysql/bin:$PATH"
 
-eval "$(atuin init zsh)"
+eval "$(atuin init --disable-up-arrow zsh)"
+setopt GLOB_DOTS
