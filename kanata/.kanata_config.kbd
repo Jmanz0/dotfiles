@@ -1,0 +1,257 @@
+;; ======================================================================
+;; kanata.kbd — keyboard-shaped layer formatting
+;; ======================================================================
+
+(defcfg
+  log-layer-changes      no
+  process-unmapped-keys  yes
+
+  ;; MX Master mouse workaround
+  macos-dev-names-exclude
+    ("MX Master 2S"
+     "MX Master 3S")
+)
+
+(defvirtualkeys
+  to-base (layer-switch base)
+)
+
+(defvar
+  tot 220
+)
+
+;; ----------------------------------------------------------------------
+;; Templates
+;; ----------------------------------------------------------------------
+
+(deftemplate homerowmod (timeouttap timeouthold keytap keyhold)
+  (tap-hold $timeouttap $timeouthold
+    (multi $keytap @.tp)
+    $keyhold)
+)
+
+;; kept from your original (currently unused)
+(deftemplate homerowmodfiltered (timeouttap timeouthold keytap keyhold typinglist)
+  (tap-hold-release-keys $timeouttap $timeouthold
+    (multi $keytap @.tp)
+    $keyhold
+    $typinglist)
+)
+
+;; Simple “mod-tap”: tap outputs a key, hold outputs a modifier
+(deftemplate modtap (timeouttap timeouthold keytap keyhold)
+  (tap-hold $timeouttap $timeouthold $keytap $keyhold)
+)
+
+;; ----------------------------------------------------------------------
+;; Aliases
+;; ----------------------------------------------------------------------
+
+(defalias
+  ;; typing-layer pulse
+  .tp
+  (switch ()
+    (multi
+      (layer-switch typing)
+      (on-idle 55 tap-vkey to-base))
+    break)
+
+  ;; macOS shortcuts
+  all M-a
+  ndo M-z
+  cut M-x
+  cpy M-c
+  pst M-v
+  run M-spc
+
+  ;; Symbols (US layout assumptions)
+  ^    S-6
+  $    S-4
+  %    S-5
+  @    S-2
+  &    S-7
+  *    S-8
+  '    '
+  `    `
+
+  {    S-[
+  pl   S-9
+  pr   S-0
+  }    S-]
+  =    =
+  +    S-=
+  -    -
+  /    /
+  ''   S-'
+
+  ~    S-`
+  [    [
+  ]    ]
+  _    S--
+  #    S-3
+  !    S-1
+  ;    ;
+  :    S-;
+  ?    S-/
+
+  ;; Backslash / pipe (use canonical key name to avoid S-\\ parsing issues)
+  bsl  bksl
+  pip  S-bksl
+)
+
+;; We use deflayermap everywhere, so defsrc can be empty.
+(defsrc)
+
+;; ======================================================================
+;; LAYERS
+;; ======================================================================
+
+;; ----------------------------------------------------------------------
+;; base
+;; ----------------------------------------------------------------------
+;; Visual:
+;; [Cmd] = hold = nav/sym layer, but still sends real Cmd
+;;
+;;     esc  1 2 3 4 5 6 7 8 9 0  -  =  bspc
+;;     tab  q w e r t y u i o p  [  ]  \
+;;     caps a s d f g h j k l ;  '  ret
+;;     lsft z x c v b n m , . /  rsft
+;;          lctl lopt lcmd spc rcmd ropt rctl
+;;
+(deflayermap (base)
+  ;; --- “hold Cmd = layer”, while still being Cmd ---
+  lmet (multi lmet (layer-while-held navigation))
+  rmet (multi rmet (layer-while-held symbols))
+
+  ;; --- small tweaks ---
+  caps bspc
+
+  ;; --- media ---
+  f1  brdn
+  f2  brup
+  f10 mute
+  f11 vold
+  f12 volu
+
+  ;; --- home-row mods (tap letter + typing pulse, hold modifier) ---
+  a (t! homerowmod $tot 400 a lctl)
+  s (t! homerowmod $tot 400 s lalt)
+  d (t! homerowmod $tot 300 d lmet)
+  f (t! homerowmod $tot 160 f lsft)
+
+  j (t! homerowmod $tot 160 j rsft)
+  k (t! homerowmod $tot 300 k rmet)
+  l (t! homerowmod $tot 400 l ralt)
+  ; (t! homerowmod $tot 400 ; rctl)
+
+  ;; --- letter triggers (tap letter, also bump to typing layer briefly) ---
+  ;; top row
+  q (multi q @.tp)  w (multi w @.tp)  e (multi e @.tp)  r (multi r @.tp)  t (multi t @.tp)
+  y (multi y @.tp)  u (multi u @.tp)  i (multi i @.tp)  o (multi o @.tp)  p (multi p @.tp)
+  ;; middle extras
+  g (multi g @.tp)  h (multi h @.tp)
+  ;; bottom row
+  z (multi z @.tp)  x (multi x @.tp)  c (multi c @.tp)  v (multi v @.tp)  b (multi b @.tp)
+  n (multi n @.tp)  m (multi m @.tp)
+)
+
+;; ----------------------------------------------------------------------
+;; typing (explicit pass-through a–z)
+;; ----------------------------------------------------------------------
+;; Visual:
+;; Same physical layout; this layer just makes letters explicit.
+(deflayermap (typing)
+  caps bspc
+  a a  b b  c c  d d  e e  f f  g g  h h  i i  j j  k k  l l  m m
+  n n  o o  p p  q q  r r  s s  t t  u u  v v  w w  x x  y y  z z
+)
+
+;; ----------------------------------------------------------------------
+;; symbols (right Cmd hold)
+;; ----------------------------------------------------------------------
+;; Visual (QWERTY positions):
+;;     1    2    3    4    5         6    7    8    9    0
+;;     ^    {    }    $    %         @    &    *    '    `
+;;     &    (    )    =    ?         /    -    +    /    "
+;;     ~    [    ]    _    #         ;    !    |    :    ?
+;;
+(deflayermap (symbols)
+  ;; number row
+  1 AG-1  2 AG-2  3 AG-3  4 AG-4  5 AG-5    6 AG-6  7 AG-7  8 AG-8  9 AG-9  0 AG-0
+
+  ;; qwerty row
+  q @^    w @{    e @}    r @$    t @%      y @@    u @&    i @*    o @'    p @`
+
+  ;; home row
+  a @&    s @pl   d @pr   f @=    g @?      h @/    j @-    k @+    l @/    ; @''
+
+  ;; bottom row
+  z @~    x @[    c @]    v @_    b @#      n @;    m @!    , @pip  . @:    / @?
+)
+
+;; ----------------------------------------------------------------------
+;; navigation (left Cmd hold)
+;; ----------------------------------------------------------------------
+;; Visual:
+;;   Cmd+num row + nav cluster left, numpad-ish right.
+;;   IMPORTANT: j/k/l/; are “tap numpad, hold your normal right-side mods”.
+;;
+;;     1     2     3     4     5           6     7     8     9     0
+;;     tab   home  up    end   pgup        /     7     8     9     cmd+spotlight
+;;     cmd+a left  down  right pgdn        -    (4/rsft) (5/rcmd) (6/ralt) (0/rctl)  [enter on ']
+;;     cmd+z cmd+x cmd+c cmd+v shift-tab   ,     1     2     3     .
+;;
+(deflayermap (navigation)
+  ;; top row: Cmd+numbers
+  1 M-1  2 M-2  3 M-3  4 M-4  5 M-5    6 M-6  7 M-7  8 M-8  9 M-9  0 M-0
+
+  ;; left block
+  q tab
+  w home
+  e up
+  r end
+  t pgup
+
+  a @all
+  s left
+  d down
+  f rght
+  g pgdn
+
+  z @ndo
+  x @cut
+  c @cpy
+  v @pst
+  b S-tab
+
+  ;; right “numpad-ish”
+  y /
+  u 7
+  i 8
+  o 9
+  p @run
+
+  h -
+
+  ;; tap = digit, hold = your normal right-hand home-row mods
+  j (t! modtap $tot 160 4 rsft)
+  k (t! modtap $tot 300 5 rmet)
+  l (t! modtap $tot 400 6 ralt)
+  ; (t! modtap $tot 400 0 rctl)
+
+  ;; Enter to the right of 0 (quote key)
+  ' ret
+
+  n ,
+  m 1
+  , 2
+  . 3
+  / .
+
+  ;; handy extras (adjust if you want different “thumb-ish” keys)
+  spc del
+  bksl lrld
+  esc esc
+)
+
+;; vim: set ft=scheme:
